@@ -37,7 +37,7 @@ void loop() {
     float I = pzem.current();          // Courant en A
     float P = pzem.power();            // Puissance active en W
     float S = pzem.apparentPower();    // Puissance apparente en VA
-    float Q = pzem.reactivePower();    // Puissance réactive en VAR
+    float N = pzem.nonActivePower();   // Puissance non-active en VAR
     float PF = pzem.pf();              // Facteur de puissance
     float F = pzem.frequency();        // Fréquence en Hz
     float E = pzem.energy();           // Énergie en kWh
@@ -50,7 +50,7 @@ void loop() {
         Serial.print("Courant   : "); Serial.print(I); Serial.println(" A");
         Serial.print("P active  : "); Serial.print(P); Serial.println(" W");
         Serial.print("S app.    : "); Serial.print(S); Serial.println(" VA");
-        Serial.print("Q réact.  : "); Serial.print(Q); Serial.println(" VAR");
+        Serial.print("N non-act.: "); Serial.print(N); Serial.println(" VAR");
         Serial.print("PF        : "); Serial.println(PF);
         Serial.print("Fréquence : "); Serial.print(F); Serial.println(" Hz");
         Serial.print("Énergie   : "); Serial.print(E); Serial.println(" kWh");

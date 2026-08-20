@@ -1,14 +1,21 @@
 /*
   PZEM004T_Enhanced.h
-  Version 1.0.0
-  Bibliothèque unifiée pour le compteur d'énergie PZEM-004T v3.0
-  Basée sur la bibliothèque de Jakub Mandula (2019), synchronisée avec son master actuel
-  Ajouts : apparentPower(), reactivePower(), readAddress(), constructeurs par référence,
-           support ESP32 (pins RX/TX), correction du nom de champ frequency
-
-  Licence MIT (voir LICENSE) :
-  Copyright (c) 2026 Olivier FOURNET
-  Copyright (c) 2019 Jakub Mandula (bibliothèque originale PZEM-004T v3.0)
+  Version 1.1.0
+  
+  Bibliothèque pour PZEM-004T v3.0 avec calculs de puissances.
+  
+  ⚠️ IMPORTANT : Le PZEM-004T mesure un facteur de puissance GLOBAL (PF = P/S)
+  qui inclut les harmoniques. Ce n'est PAS le cosφ du déphasage fondamental.
+  
+  Puissances disponibles :
+  - P (active)     : mesurée directement par le module en W
+  - S (apparente)  : calculée S = P / PF en VA
+  - N (non-active) : calculée N = √(S² - P²) en VAR = √(Q² + D²)
+  
+  La puissance "réactive" Q (fondamentale) et la puissance "déformante" D
+  ne peuvent PAS être calculées sans une mesure externe du cosφ.
+  
+  Licence MIT
 */
 
 #ifndef PZEM004T_ENHANCED_H
@@ -34,52 +41,50 @@
 
 class PZEM004T_Enhanced {
 public:
-    // Constructeur vide pour tableaux / affectation ultérieure (pzem = PZEM004T_Enhanced(port))
+    // Constructeurs
     PZEM004T_Enhanced();
 
 #if defined(PZEM004_SOFTSERIAL)
-    // Par broches : crée son propre SoftwareSerial (ancienne forme, toujours fonctionnelle)
     PZEM004T_Enhanced(uint8_t receivePin, uint8_t transmitPin, uint8_t addr = PZEM_DEFAULT_ADDR);
-    // Par référence sur une instance SoftwareSerial (appelle begin)
     PZEM004T_Enhanced(SoftwareSerial& port, uint8_t addr = PZEM_DEFAULT_ADDR);
-    // Par référence sur un Stream (ne fait PAS appel à begin)
     PZEM004T_Enhanced(Stream& port, uint8_t addr = PZEM_DEFAULT_ADDR);
 #endif
 
 #if defined(ESP32)
-    // ESP32 : nécessite les broches RX/TX (begin avec SERIAL_8N1)
     PZEM004T_Enhanced(HardwareSerial& port, uint8_t receivePin, uint8_t transmitPin, uint8_t addr = PZEM_DEFAULT_ADDR);
 #else
     PZEM004T_Enhanced(HardwareSerial& port, uint8_t addr = PZEM_DEFAULT_ADDR);
 #endif
-    // Forme par pointeur, conservée pour rétrocompatibilité
     PZEM004T_Enhanced(HardwareSerial* port, uint8_t addr = PZEM_DEFAULT_ADDR);
     ~PZEM004T_Enhanced();
 
-    // --- Mesures directes (comme l'original) ---
-    float voltage();      // Tension en V
-    float current();      // Courant en A
+    // --- Mesures directes du module ---
+    float voltage();      // Tension en V (valeur efficace)
+    float current();      // Courant en A (valeur efficace)
     float power();        // Puissance active P en W
     float energy();       // Énergie en kWh
     float frequency();    // Fréquence en Hz
-    float pf();           // Facteur de puissance (cos φ)
+    float pf();           // Facteur de puissance global PF = P/S (inclut harmoniques)
 
-    // --- NOUVEAUTÉS : Puissances calculées ---
-    float apparentPower();   // Puissance apparente S = U * I (en VA)
-    float reactivePower();   // Puissance réactive Q = S * sin(φ) (en VAR)
-    float powerFactor();     // Alias de pf() pour clarté
+    // --- Puissances calculées à partir des mesures ---
+    float apparentPower();    // Puissance apparente S = P / PF (VA)
+    float nonActivePower();   // Puissance non-active N = √(S² - P²) (VAR)
+                              // En présence d'harmoniques, N = √(Q² + D²)
+                              // En sinusoïdal pur, N = Q (puissance réactive)
+
+    // Alias pour clarté
+    float powerFactor();      // = pf()
 
     // --- Fonctions de configuration ---
     bool setAddress(uint8_t addr);
     uint8_t getAddress();
-    uint8_t readAddress(bool update = false); // Lit l'adresse dans le registre du module
+    uint8_t readAddress(bool update = false);
     bool setPowerAlarm(uint16_t watts);
     bool getPowerAlarm();
     bool resetEnergy();
     void search();
 
 private:
-    // Registres et commandes Modbus
     enum {
         REG_VOLTAGE      = 0x0000,
         REG_CURRENT_L    = 0x0001,
@@ -93,23 +98,23 @@ private:
         REG_ALARM        = 0x0009,
         WREG_ALARM_THR   = 0x0001,
         WREG_ADDR        = 0x0002,
-        CMD_RHR          = 0x03, // Read Holding Registers
-        CMD_RIR          = 0x04, // Read Input Registers
-        CMD_WSR          = 0x06, // Write Single Register
+        CMD_RHR          = 0x03,
+        CMD_RIR          = 0x04,
+        CMD_WSR          = 0x06,
         CMD_CAL          = 0x41,
         CMD_REST         = 0x42,
-        UPDATE_TIME      = 200,  // Cache des valeurs (ms)
-        READ_TIMEOUT     = 100,  // Timeout de réception (ms)
+        UPDATE_TIME      = 200,
+        READ_TIMEOUT     = 100,
         INVALID_ADDRESS  = 0x00
     };
 
     Stream* _serial;
     bool _isSoft;
     uint8_t _addr;
-    bool _isConnected;          // Flag mis à jour lors d'une communication réussie
+    bool _isConnected;
 
 #if defined(PZEM004_SOFTSERIAL)
-    SoftwareSerial* _localSWserial = nullptr; // Pointeur vers le SoftwareSerial local (s'il a été créé ici)
+    SoftwareSerial* _localSWserial = nullptr;
 #endif
 
     struct {
@@ -134,7 +139,7 @@ private:
 };
 
 // ============================================================
-//  IMPLÉMENTATION (tout en ligne pour un fichier .h unique)
+//  IMPLÉMENTATION
 // ============================================================
 
 PZEM004T_Enhanced::PZEM004T_Enhanced() :
@@ -188,14 +193,14 @@ void PZEM004T_Enhanced::init(Stream* port, bool isSoft, uint8_t addr) {
     _isSoft = isSoft;
     _isConnected = false;
     _lastRead = 0;
-    _lastRead -= UPDATE_TIME; // Force une lecture immédiate
+    _lastRead -= UPDATE_TIME;
 }
 
 bool PZEM004T_Enhanced::updateValues() {
     static uint8_t response[25];
     if (_lastRead + UPDATE_TIME > millis()) return true;
 
-    _lastRead = millis(); // Throttle la lecture même en cas d'échec
+    _lastRead = millis();
 
     sendCmd8(CMD_RIR, 0x00, 0x0A, false);
 
@@ -204,10 +209,8 @@ bool PZEM004T_Enhanced::updateValues() {
     _currentValues.voltage   = ((uint32_t)response[3] << 8 | (uint32_t)response[4]) / 10.0;
     _currentValues.current   = ((uint32_t)response[5] << 8 | (uint32_t)response[6] |
                                 (uint32_t)response[7] << 24 | (uint32_t)response[8] << 16) / 1000.0;
-
     _currentValues.power     = ((uint32_t)response[9] << 8 | (uint32_t)response[10] |
                                 (uint32_t)response[11] << 24 | (uint32_t)response[12] << 16) / 10.0;
-
     _currentValues.energy    = ((uint32_t)response[13] << 8 | (uint32_t)response[14] |
                                 (uint32_t)response[15] << 24 | (uint32_t)response[16] << 16) / 1000.0;
     _currentValues.frequency = ((uint32_t)response[17] << 8 | (uint32_t)response[18]) / 10.0;
@@ -217,6 +220,7 @@ bool PZEM004T_Enhanced::updateValues() {
     return true;
 }
 
+// --- Mesures directes ---
 float PZEM004T_Enhanced::voltage()   { return updateValues() ? _currentValues.voltage : NAN; }
 float PZEM004T_Enhanced::current()   { return updateValues() ? _currentValues.current : NAN; }
 float PZEM004T_Enhanced::power()     { return updateValues() ? _currentValues.power : NAN; }
@@ -225,21 +229,24 @@ float PZEM004T_Enhanced::frequency() { return updateValues() ? _currentValues.fr
 float PZEM004T_Enhanced::pf()        { return updateValues() ? _currentValues.pf : NAN; }
 float PZEM004T_Enhanced::powerFactor() { return pf(); }
 
-// --- NOUVEAUTÉS : calculs P, S, Q ---
+// --- Puissances calculées ---
+// S = P / PF (utilisation du PF mesuré par le module)
 float PZEM004T_Enhanced::apparentPower() {
-    float V = voltage();
-    float I = current();
-    if (isnan(V) || isnan(I)) return NAN;
-    return V * I;  // S = U * I en VA
+    float P = power();
+    float PF = pf();
+    if (isnan(P) || isnan(PF) || PF == 0) return NAN;
+    return P / PF;
 }
 
-float PZEM004T_Enhanced::reactivePower() {
+// N = √(S² - P²) = √(Q² + D²) en présence d'harmoniques
+// En sinusoïdal pur, N = Q (la puissance réactive)
+float PZEM004T_Enhanced::nonActivePower() {
     float S = apparentPower();
-    float PF = pf();
-    if (isnan(S) || isnan(PF)) return NAN;
-    // sin(φ) = sqrt(1 - cos²(φ))
-    float sinPhi = sqrt(1.0 - PF * PF);
-    return S * sinPhi;  // Q = S * sin(φ) en VAR
+    float P = power();
+    if (isnan(S) || isnan(P)) return NAN;
+    float val = S*S - P*P;
+    if (val < 0) return 0;
+    return sqrt(val);
 }
 
 // --- Fonctions de configuration ---
