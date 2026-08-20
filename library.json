@@ -1,0 +1,62 @@
+{
+  "name": "PZEM004T_Enhanced",
+  "version": "1.0.0",
+  "description": "Bibliothèque Arduino pour le compteur d'énergie PZEM-004T v3.0 (Modbus/RS485) avec calcul des puissances apparente (S) et réactive (Q), readAddress(), et support HardwareSerial/SoftwareSerial/ESP32.",
+  "keywords": [
+    "pzem-004t",
+    "pzem004t",
+    "modbus",
+    "rs485",
+    "power",
+    "energy",
+    "meter",
+    "voltage",
+    "current",
+    "reactive-power",
+    "apparent-power"
+  ],
+  "homepage": "https://github.com/Fo170/PZEM004T_Enhanced",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Fo170/PZEM004T_Enhanced.git"
+  },
+  "authors": [
+    {
+      "name": "Olivier FOURNET",
+      "url": "https://github.com/Fo170",
+      "email": "olivier.fournet@free.fr",
+      "maintainer": true
+    }
+  ],
+  "license": "MIT",
+  "frameworks": "arduino",
+  "platforms": [
+    "atmelavr",
+    "espressif8266",
+    "espressif32"
+  ],
+  "headers": [
+    "PZEM004T_Enhanced.h"
+  ],
+  "examples": [
+    "examples/PZEM_HardwareSerial/PZEM_HardwareSerial.ino",
+    "examples/PZEM_SoftwareSerial/PZEM_SoftwareSerial.ino",
+    "examples/PZEM_ESP32/PZEM_ESP32.ino"
+  ],
+  "build": {
+    "srcDir": ".",
+    "includeDir": ".",
+    "srcFilter": [
+      "+<PZEM004T_Enhanced.h>"
+    ]
+  },
+  "export": {
+    "exclude": [
+      "AGENTS.md",
+      "CLAUDE.md",
+      ".gitignore",
+      ".vscode",
+      ".git"
+    ]
+  }
+}

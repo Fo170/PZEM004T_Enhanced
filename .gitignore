@@ -1,0 +1,13 @@
+# Artefacts PlatformIO
+.pio/
+.pioenvs/
+.piolibdeps/
+
+# Fichiers locaux (à ne jamais publier)
+AGENTS.md
+CLAUDE.md
+copilot-instructions.md
+
+# IDE
+.vscode/
+.idea/
