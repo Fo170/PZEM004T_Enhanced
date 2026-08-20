@@ -205,7 +205,7 @@ bool PZEM004T_Enhanced::updateValues() {
     _currentValues.current   = ((uint32_t)response[5] << 8 | (uint32_t)response[6] |
                                 (uint32_t)response[7] << 24 | (uint32_t)response[8] << 16) / 1000.0;
 
-    _currentValues.power     = 1000.0 * ((uint32_t)response[9] << 8 | (uint32_t)response[10] |
+    _currentValues.power     = ((uint32_t)response[9] << 8 | (uint32_t)response[10] |
                                 (uint32_t)response[11] << 24 | (uint32_t)response[12] << 16) / 10.0;
 
     _currentValues.energy    = ((uint32_t)response[13] << 8 | (uint32_t)response[14] |
