@@ -64,7 +64,7 @@ Ajoutez la bibliothèque à votre `platformio.ini` (forme git complète) :
 
 ```ini
 lib_deps =
-    https://github.com/Fo170/PZEM004T_Enhanced.git
+    https://github.com/Fo170/PZEM004T_Enhanced.git@^1.0.0
 ```
 
 ### Arduino IDE (Gestionnaire de bibliothèques / ZIP)
