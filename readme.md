@@ -88,3 +88,16 @@ La bibliothèque calcule :
 ```ini
 lib_deps =
     https://github.com/Fo170/PZEM004T_Enhanced.git@^1.1.0
+```
+
+## Licence
+
+Distribué sous **licence MIT**. Voir le fichier [LICENSE](LICENSE).
+
+## Auteur
+
+Olivier FOURNET ([@Fo170](https://github.com/Fo170)).
+
+Basé sur la bibliothèque [PZEM-004T v3.0](https://github.com/mandulaj/PZEM-004T-v30) de Jakub Mandula (MIT). 
+
+
